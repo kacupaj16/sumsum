@@ -30,6 +30,16 @@ TOKEN = ""
 
 SAMPLE_RATE = 16000
 
+def get_token(path_to_token:str) -> str  :
+    if len(path_to_token)==0:
+        print("No path provided")
+        return
+    with open(path_to_token,'r') as f:
+        to = f.read()
+
+    return to
+
+
 def load_audio(file: str, sr: int = SAMPLE_RATE):
     """
     Open an audio file and read as mono waveform, resampling as necessary
@@ -510,10 +520,10 @@ class Translator():
         self.model_name = model_name
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-        self.detection_model = fasttext.load_model("lid218e.bin")
+        self.detection_model = fasttext.load_model("downloads/lid218e.bin")
         self.source_language = 'unknown'
         self.target_language =  'unknown'
-        with open('flora200.json') as f:
+        with open('downloads/flora200.json') as f:
             self.language_tags = json.load(f)
 
     def get_tag_languages(self,print_list:bool=False):
@@ -666,6 +676,7 @@ class SummarizerQwen():
         return response
     
     def summarize_gamma(self,input:str='' ):
+        ## token required 
         self.tokenizer = AutoTokenizer.from_pretrained("google/gemma-7b-it",token=TOKEN)
         self.model = AutoModelForCausalLM.from_pretrained("google/gemma-7b-it",token=TOKEN)
 
