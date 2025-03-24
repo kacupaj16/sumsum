@@ -558,6 +558,9 @@ class SummarizerQwen():
 
         if save_to_file:
             with open(f"out_{self.model_name}.txt","w") as of:
+                of.write('Instruction:\n')
+                of.write(task)
+                of.write('\nResponse:\n')
                 of.write(response)
                 of.writelines(f'\n{time.time()-t0} s')
                 

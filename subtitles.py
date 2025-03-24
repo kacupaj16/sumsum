@@ -118,7 +118,7 @@ def break_chunk(chunk:str,max_length:int=50):
     
 def get_title_video(url_video:str='https://youtu.be/DyRjpoBL9aI?si=5msxGmyZ2k64hKzz'):
     r = requests.get(url_video)
-    soup = BeautifulSoup(r.text)
+    soup = BeautifulSoup(r.text,features="html.parser")
 
     link = soup.find_all(name="title")[0]
     title = str(link)
