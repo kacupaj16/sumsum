@@ -1,4 +1,4 @@
-import opencv as cv2
+import cv2
 import os
 from PIL import Image, ImageDraw, ImageFont
 import moviepy as mp
