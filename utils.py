@@ -510,11 +510,10 @@ class Summarizer():
         return summary
     
 class SummarizerQwen():
-    def __init__(self,qwen_model_name:str="Qwen/Qwen1.5-0.5B-Chat",device:str = "cuda"):
-        self.model_name = qwen_model_name
+    def __init__(self,qwen_model_name:str="Qwen/Qwen2.5-1.5B-Instruct",device:str = "cpu"):
+        self.model_name = qwen_model_name.split('/')[-1]
         self.model = AutoModelForCausalLM.from_pretrained(
                                                 qwen_model_name,
-                                                torch_dtype="auto",
                                                 ).to(device)
         self.tokenizer = AutoTokenizer.from_pretrained(qwen_model_name)
 
@@ -558,7 +557,7 @@ class SummarizerQwen():
         response = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
         if save_to_file:
-            with open(output_filename,"w") as of:
+            with open(f"out_{self.model_name}.txt","w") as of:
                 of.write(response)
                 of.writelines(f'\n{time.time()-t0} s')
                 

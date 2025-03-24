@@ -1,9 +1,11 @@
-import cv2
 import os
-from PIL import Image, ImageDraw, ImageFont
+import cv2
+import requests
 import moviepy as mp
 from srt import parse
+from bs4 import BeautifulSoup
 from pydub import AudioSegment
+from PIL import Image, ImageDraw, ImageFont
 
 
 def get_text_from_srt(filename:str ):
@@ -114,6 +116,15 @@ def break_chunk(chunk:str,max_length:int=50):
     else: 
         return chunk
     
+def get_title_video(url_video:str='https://youtu.be/DyRjpoBL9aI?si=5msxGmyZ2k64hKzz'):
+    r = requests.get(url_video)
+    soup = BeautifulSoup(r.text)
 
+    link = soup.find_all(name="title")[0]
+    title = str(link)
+    title = title.replace("<title>","")
+    title = title.replace("</title>","")
+
+    return title
 
 
