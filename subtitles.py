@@ -2,10 +2,15 @@ import os
 import cv2
 import requests
 import moviepy as mp
+
+from torch import zeros
 from srt import parse
 from bs4 import BeautifulSoup
 from pydub import AudioSegment
 from PIL import Image, ImageDraw, ImageFont
+
+from torchmetrics.functional.text import word_error_rate, match_error_rate, word_information_lost, char_error_rate
+
 
 
 def get_text_from_srt(filename:str ):
@@ -116,6 +121,38 @@ def break_chunk(chunk:str,max_length:int=50):
     else: 
         return chunk
     
+def compare_srt_files(file_prediction:str,file_groundtruth:str):
+    body_pred_whole = get_text_from_srt(filename=file_prediction).lower().replace("\n", " ")
+    body_gt_whole = get_text_from_srt(filename=file_groundtruth).lower().replace("\n", " ")
+    interval = 1500
+    print(len(body_pred_whole))
+    print(len(body_gt_whole))
+    ceil = len(max(body_pred_whole,body_gt_whole))//interval +1
+    WER = zeros(ceil)
+    MER = zeros(ceil)
+    WIL = zeros(ceil)
+    CER = zeros(ceil)
+    for i in range(ceil):
+        body_pred = body_pred_whole[i*interval:(i+1)*interval]
+        body_gt  =  body_gt_whole[i*interval:(i+1)*interval]
+
+        WER[i] = word_error_rate(preds=body_pred,target=body_gt)
+        MER[i] =match_error_rate(preds=body_pred,target=body_gt)
+        WIL[i] = word_information_lost(preds=body_pred,target=body_gt)
+        CER[i] = char_error_rate(preds=body_pred,target=body_gt)
+    
+    wer = WER.mean()
+    mer = MER.mean()
+    wil = WIL.mean()
+    cer = CER.mean()
+
+    print(f'Word Error Rate:\t{wer}')
+    print(f'Match Error Rate:\t{mer}')
+    print(f'Word Information Lost:\t{wil}')
+    print(f'Character Error Rate:\t{cer}')
+
+    return [wer,mer,wil,cer]
+
 def get_title_video(url_video:str='https://youtu.be/DyRjpoBL9aI?si=5msxGmyZ2k64hKzz'):
     r = requests.get(url_video)
     soup = BeautifulSoup(r.text,features="html.parser")

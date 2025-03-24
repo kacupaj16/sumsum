@@ -1,28 +1,26 @@
 import re 
 import os
 import cv2
-import numpy as np
 import time
-import matplotlib.pyplot as plt
+import json
+import nltk
 import shutil
+import whisper
+import fasttext
+import numpy as np
+import matplotlib.pyplot as plt
+
+
+from pydub import AudioSegment
+from datetime import timedelta
+from srt import Subtitle, compose,parse
 from PIL import Image, ImageDraw, ImageFont
 from subprocess import run, CalledProcessError
-from datetime import timedelta
-from tqdm import tqdm
-from srt import Subtitle, compose,parse
-import json 
-import fasttext
-import nltk
 
-from sys import maxsize
-import whisper
-from pydub import AudioSegment
-from torchmetrics.functional.text import word_error_rate, match_error_rate, word_information_lost, char_error_rate
 
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
 from transformers import BartTokenizer, BartForConditionalGeneration
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from torch import zeros
 
 
 TOKEN = ""
@@ -510,7 +508,7 @@ class Summarizer():
         return summary
     
 class SummarizerQwen():
-    def __init__(self,qwen_model_name:str="Qwen/Qwen2.5-1.5B-Instruct",device:str = "cpu"):
+    def __init__(self,qwen_model_name:str="Qwen/Qwen2.5-0.5B-Instruct",device:str = "cpu"):
         self.model_name = qwen_model_name.split('/')[-1]
         self.model = AutoModelForCausalLM.from_pretrained(
                                                 qwen_model_name,
@@ -548,7 +546,8 @@ class SummarizerQwen():
 
         generated_ids = self.model.generate(
             model_inputs.input_ids,
-            max_new_tokens=max_new_length_tokens
+            max_new_tokens=max_new_length_tokens,
+             attention_mask=model_inputs["attention_mask"]
         )
         generated_ids = [
             output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
@@ -557,7 +556,7 @@ class SummarizerQwen():
         response = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
 
         if save_to_file:
-            with open(f"out_{self.model_name}.txt","w") as of:
+            with open(output_filename,"w") as of:
                 of.write('Instruction:\n')
                 of.write(task)
                 of.write('\nResponse:\n')
@@ -579,34 +578,3 @@ class SummarizerQwen():
         print(self.tokenizer.decode(outputs[0]))
 
 
-def compare_srt_files(file_prediction:str,file_groundtruth:str):
-    body_pred_whole = get_text_from_srt(filename=file_prediction).lower().replace("\n", " ")
-    body_gt_whole = get_text_from_srt(filename=file_groundtruth).lower().replace("\n", " ")
-    interval = 1500
-    print(len(body_pred_whole))
-    print(len(body_gt_whole))
-    ceil = len(max(body_pred_whole,body_gt_whole))//interval +1
-    WER = zeros(ceil)
-    MER = zeros(ceil)
-    WIL = zeros(ceil)
-    CER = zeros(ceil)
-    for i in range(ceil):
-        body_pred = body_pred_whole[i*interval:(i+1)*interval]
-        body_gt  =  body_gt_whole[i*interval:(i+1)*interval]
-
-        WER[i] = word_error_rate(preds=body_pred,target=body_gt)
-        MER[i] =match_error_rate(preds=body_pred,target=body_gt)
-        WIL[i] = word_information_lost(preds=body_pred,target=body_gt)
-        CER[i] = char_error_rate(preds=body_pred,target=body_gt)
-    
-    wer = WER.mean()
-    mer = MER.mean()
-    wil = WIL.mean()
-    cer = CER.mean()
-
-    print(f'Word Error Rate:\t{wer}')
-    print(f'Match Error Rate:\t{mer}')
-    print(f'Word Information Lost:\t{wil}')
-    print(f'Character Error Rate:\t{cer}')
-
-    return [wer,mer,wil,cer]
