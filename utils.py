@@ -508,7 +508,7 @@ class Summarizer():
         return summary
     
 class SummarizerQwen():
-    def __init__(self,qwen_model_name:str="Qwen/Qwen2.5-0.5B-Instruct",device:str = "cpu"):
+    def __init__(self,qwen_model_name:str="Qwen/Qwen2.5-3B-Instruct",device:str = "cpu"):
         self.model_name = qwen_model_name.split('/')[-1]
         self.model = AutoModelForCausalLM.from_pretrained(
                                                 qwen_model_name,
@@ -526,7 +526,7 @@ class SummarizerQwen():
 
     def summarize(self,task:str, 
                   input_text:str,
-                  prompt_sys:str = "You are a helpful assistant.",
+                  prompt_sys:str = "You are are a strict but fair reviewer.",
                   max_new_length_tokens:int=256,
                   save_to_file:bool=True,
                   output_filename:str="out.txt"):
